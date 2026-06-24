@@ -2,6 +2,7 @@
 
 namespace Sunnysideup\EcommerceCustomProductLists\Model;
 
+use SilverStripe\ORM\ManyManyList;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\CheckboxSetField;
@@ -30,7 +31,7 @@ use SilverStripe\ORM\FieldType\DBField;
  * @property bool $Started
  * @property string $StopDateTime
  * @property bool $Stopped
- * @method \SilverStripe\ORM\ManyManyList|\Sunnysideup\EcommerceCustomProductLists\Model\CustomProductList[] CustomProductLists()
+ * @method ManyManyList|CustomProductList[] CustomProductLists()
  */
 class CustomProductListAction extends DataObject
 {
@@ -152,7 +153,7 @@ class CustomProductListAction extends DataObject
 
     public function getActivated(): DBBoolean
     {
-        $val = (bool) $this->Started === true && (bool) $this->Stopped === false;
+        $val = (bool) $this->Started && (bool) $this->Stopped === false;
         return DBBoolean::create_field('Boolean', $val);
     }
 
@@ -184,7 +185,7 @@ class CustomProductListAction extends DataObject
 
     public function getActivatedNotNice()
     {
-        return (bool) $this->Started === true && (bool) $this->Stopped === false;
+        return (bool) $this->Started && (bool) $this->Stopped === false;
     }
 
     public function doRunNow(): array
@@ -199,24 +200,26 @@ class CustomProductListAction extends DataObject
             $this->write();
             $action = 'Stopped';
         }
+
         $this->runMessages[] = $this->Title . ' ... ' . $action . ' COMPLETED';
         return $this->runMessages;
     }
 
     public function runToStart(): bool
     {
-        user_error('You must implement runToStart in ' . __CLASS__, E_USER_ERROR);
+        user_error('You must implement runToStart in ' . self::class, E_USER_ERROR);
         return false;
     }
 
     public function runToEnd(): bool
     {
-        user_error('You must implement runToEnd in ' . __CLASS__, E_USER_ERROR);
+        user_error('You must implement runToEnd in ' . self::class, E_USER_ERROR);
         return false;
     }
+
     public function repeatablyRun(): bool
     {
-        user_error('You must implement repeatablyRun in ' . __CLASS__, E_USER_ERROR);
+        user_error('You must implement repeatablyRun in ' . self::class, E_USER_ERROR);
         return false;
     }
 
@@ -230,10 +233,12 @@ class CustomProductListAction extends DataObject
         if (!$repeatableRun && $this->Started) {
             return false;
         }
+
         // can repeat and already started: YES
         if ($this->StartNow) {
             return true;
         }
+
         return $this->getIsInNow();
     }
 
@@ -246,10 +251,7 @@ class CustomProductListAction extends DataObject
         if ($this->Stopped) {
             return false;
         }
-        if ($this->getIsInPast()) {
-            return true;
-        }
-        return false;
+        return $this->getIsInPast();
     }
 
     public function getCMSFields()
@@ -262,6 +264,7 @@ class CustomProductListAction extends DataObject
                 $fields->dataFieldByName($readOnlyField)->performReadonlyTransformation()
             );
         }
+
         $customListsGridField = $fields->dataFieldByName('CustomProductLists');
         if ($customListsGridField) {
             $customListsGridField->getConfig()
@@ -271,6 +274,7 @@ class CustomProductListAction extends DataObject
             $customListsGridField->setDescription('Select one or more custom product lists to which this action will apply.');
             $customListsGridField->setName('CustomProductListsSelector');
         }
+
         $fields->addFieldsToTab(
             'Root.CustomProductLists',
             [
@@ -306,6 +310,7 @@ class CustomProductListAction extends DataObject
                 foreach ($exampleProducts as $exampleProduct) {
                     $linkArray[] = '- <a href="' . $exampleProduct->Link() . '" target="_blank">' . $exampleProduct->Title . '</a>';
                 }
+
                 $fields->addFieldsToTab(
                     'Root.Main',
                     [
@@ -318,6 +323,7 @@ class CustomProductListAction extends DataObject
                     ]
                 );
             }
+
             $fields->addFieldsToTab(
                 'Root.Status',
                 [
@@ -341,11 +347,13 @@ class CustomProductListAction extends DataObject
                 ['Started', 'Stopped', 'RunNow', 'StartNow']
             );
         }
+
         if ($this->Stopped) {
             $fields->removeByName(
                 ['RunNow', 'StartNow', 'RunNowHeader']
             );
         }
+
         // $nextDay = date('Y-m-d h:i:s', strtotime('+2 hours'));
         // if (! $this->Started && ! $this->isRunStartNow() && $this->exists()) {
         //     $fields->dataFieldByName('StartDateTime')->setMinDatetime($nextDay);
@@ -369,6 +377,7 @@ class CustomProductListAction extends DataObject
                 'Title'
             );
         }
+
         $sn = $fields->dataFieldByName('StartNow');
         if ($sn) {
             $sn

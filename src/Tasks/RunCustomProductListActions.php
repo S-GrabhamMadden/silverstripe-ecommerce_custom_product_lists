@@ -40,10 +40,12 @@ class RunCustomProductListActions extends BuildTask
                 }
             }
         }
+
         $this->outputMessage('--- DONE ---');
         if (! $this->verbose) {
             return $this->messages;
         }
+        return null;
     }
 
     protected function outputMessage(string $message)
